@@ -1,5 +1,8 @@
 from airflow import DAG
 from airflow.utils.dates import days_ago
+{% if operation.cpu_request or operation.mem_request or operation.gpu_limit %}
+from kubernetes.client import models as k8s
+{% endif %}
 
 args = {
     'project_id' : '{{ pipeline_name }}',
@@ -22,9 +25,6 @@ dag = DAG(
 {{import_statement}}
 {% endfor %}
 {% else %}
-from airflow.kubernetes.secret import Secret
-from airflow.contrib.kubernetes.volume import Volume
-from airflow.contrib.kubernetes.volume_mount import VolumeMount
 from airflow.contrib.operators.kubernetes_pod_operator import KubernetesPodOperator
 {% endif %}
 
@@ -48,26 +48,33 @@ op_{{ operation.id|regex_replace }} = KubernetesPodOperator(name='{{ operation.n
                                                             task_id='{{ operation.notebook|regex_replace }}',
                                                             env_vars={{ operation.pipeline_envs }},
         {% if operation.cpu_request or operation.mem_request or operation.gpu_limit %}
-                                                            resources = {
-            {% if operation.cpu_request %}
-                                                                       'request_cpu': '{{ operation.cpu_request }}',
-            {% endif %}
-            {% if operation.mem_request %}
-                                                                       'request_memory': '{{ operation.mem_request }}G',
-            {% endif %}
-            {% if operation.gpu_limit %}
-                                                                       'limit_gpu': '{{ operation.gpu_limit }}',
-            {% endif %}
-                                                            },
+                                                            resources = k8s.V1ResourceRequirements(
+                                                                request{
+                                                                    {% if operation.cpu_request %}
+                                                                    'cpu': '{{ operation.cpu_request }}',
+                                                                    {% endif %}
+                                                                    {% if operation.mem_request %}
+                                                                    'memory': '{{ operation.mem_request }}',
+                                                                    {% endif %}             
+                                                                },
+                                                                limits={
+                                                                    {% if operation.cpu_request %}
+                                                                    'cpu': '{{ operation.cpu_limit }}',
+                                                                    {% endif %}
+                                                                    {% if operation.mem_request %}
+                                                                    'memory': '{{ operation.mem_limit }}',
+                                                                    {% endif %}         
+                                                                    {% if operation.gpu_limit %}
+                                                                    'nvidia.com/gpu': '{{ operation.gpu_limit }}',
+                                                                    {% endif %}
+                                                                }
+                                                            )
+
         {% endif %}
-                                                            volumes=[{{ processor.render_volumes(operation.elyra_props) }}],
-                                                            volume_mounts=[{{ processor.render_mounts(operation.elyra_props) }}],
-                                                            secrets=[{{ processor.render_secrets(operation.elyra_props, cos_secret) }}],
                                                             annotations={{ processor.render_annotations(operation.elyra_props) }},
                                                             labels={{ processor.render_labels(operation.elyra_props) }},
                                                             tolerations=[{{ processor.render_tolerations(operation.elyra_props) }}],
                                                             in_cluster={{ in_cluster }},
-                                                            config_file="{{ kube_config_path }}",
 {% endif %}
                                                             dag=dag)
     {% if operation.image_pull_policy %}

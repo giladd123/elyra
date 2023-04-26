@@ -332,6 +332,13 @@ be fully qualified (i.e., prefixed with their package names).
                     outputs=operation.outputs,
                 )
 
+                if operation.cpu:
+                    if operation.cpu[-1].isdigit():
+                        cpu_limit = f"{int(operation.cpu)*4}"
+                    else:
+                        cpu_unit = operation.cpu[-1]
+                        cpu_limit = f"{int(operation.cpu[:-2])}{cpu_unit}"
+                        
                 target_op = {
                     "notebook": operation.name,
                     "id": operation.id,
@@ -341,7 +348,9 @@ be fully qualified (i.e., prefixed with their package names).
                     "parent_operation_ids": operation.parent_operation_ids,
                     "image_pull_policy": image_pull_policy,
                     "cpu_request": operation.cpu,
+                    "cpu_limit": cpu_limit,
                     "mem_request": operation.memory,
+                    "mem_limit": operation.memory,
                     "gpu_limit": operation.gpu,
                     "operator_source": operation.filename,
                 }
