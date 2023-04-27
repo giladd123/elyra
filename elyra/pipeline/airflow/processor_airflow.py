@@ -332,13 +332,8 @@ be fully qualified (i.e., prefixed with their package names).
                     outputs=operation.outputs,
                 )
 
-                if operation.cpu:
-                    if operation.cpu[-1].isdigit():
-                        cpu_limit = f"{int(operation.cpu)*4}"
-                    else:
-                        cpu_unit = operation.cpu[-1]
-                        cpu_limit = f"{int(operation.cpu[:-2])}{cpu_unit}"
-                        
+                cpu_limit = operation.cpu * 4
+
                 target_op = {
                     "notebook": operation.name,
                     "id": operation.id,
@@ -385,7 +380,8 @@ be fully qualified (i.e., prefixed with their package names).
 
                     # Get corresponding property's value from parsed pipeline
                     property_value_dict = operation.component_props.get(component_property.ref)
-                    data_entry_type = property_value_dict.get("widget", None)  # one of: inputpath, file, raw data type
+                    # one of: inputpath, file, raw data type
+                    data_entry_type = property_value_dict.get("widget", None)
                     property_value = property_value_dict.get("value", None)
 
                     if data_entry_type == "inputpath":
@@ -433,7 +429,8 @@ be fully qualified (i.e., prefixed with their package names).
                     # If we didn't find a mapping to the import statement, let's check if the component
                     # name includes a package prefix.  If it does, log a warning, but proceed, otherwise
                     # raise an exception.
-                    if len(component.name.split(".")) > 1:  # We (presumably) have a package prefix
+                    # We (presumably) have a package prefix
+                    if len(component.name.split(".")) > 1:
                         self.log.warning(
                             f"Operator '{component.name}' of node '{operation.name}' is not configured "
                             f"in the list of available Airflow operators but appears to include a "
