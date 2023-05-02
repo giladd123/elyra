@@ -331,6 +331,11 @@ be fully qualified (i.e., prefixed with their package names).
                     inputs=operation.inputs,
                     outputs=operation.outputs,
                 )
+                if operation.cpu is None:
+                    raise ValueError(f"Operation '{operation.name}' is missing required 'cpu' property")
+
+                if operation.memory is None:
+                    raise ValueError(f"Operation '{operation.name}' is missing required 'memory' property")
 
                 cpu_limit = operation.cpu * 4
 

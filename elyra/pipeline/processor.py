@@ -66,8 +66,7 @@ class PipelineProcessorManager(SingletonConfigurable):
         root_dir: Optional[str] = kwargs.pop("root_dir", None)
         super().__init__(**kwargs)
         self.root_dir = get_expanded_path(root_dir)
-        self._registry = PipelineProcessorRegistry.instance(
-            root_dir=self.root_dir)
+        self._registry = PipelineProcessorRegistry.instance(root_dir=self.root_dir)
 
     def get_processor_for_runtime(self, runtime_name: str):
         processor = self._registry.get_processor(runtime_name)
@@ -96,8 +95,7 @@ class PipelineProcessorManager(SingletonConfigurable):
         processor = self.get_processor_for_runtime(runtime_name=runtime)
 
         res = await asyncio.get_event_loop().run_in_executor(
-            None, functools.partial(
-                processor.get_component, component_id=component_id)
+            None, functools.partial(processor.get_component, component_id=component_id)
         )
         return res
 
@@ -205,8 +203,7 @@ class PipelineProcessor(LoggingConfigurable):  # ABC
 
     enable_pipeline_info: bool = Bool(
         config=True,
-        default_value=(os.getenv("ELYRA_ENABLE_PIPELINE_INFO",
-                       "true").lower() == "true"),
+        default_value=(os.getenv("ELYRA_ENABLE_PIPELINE_INFO", "true").lower() == "true"),
         help="""Produces formatted logging of informational messages with durations
                                 (default=True). (ELYRA_ENABLE_PIPELINE_INFO env var)""",
     )
@@ -230,8 +227,7 @@ class PipelineProcessor(LoggingConfigurable):  # ABC
         components: List[Component] = ComponentCache.get_generic_components()
 
         # Retrieve runtime-specific components
-        components.extend(ComponentCache.instance(
-        ).get_all_components(platform=self._type))
+        components.extend(ComponentCache.instance().get_all_components(platform=self._type))
 
         return components
 
@@ -278,8 +274,7 @@ class PipelineProcessor(LoggingConfigurable):  # ABC
             operation_name = kwargs.get("operation_name")
             op_clause = f":'{operation_name}'" if operation_name else ""
 
-            self.log.info(
-                f"{self._name} '{pipeline_name}'{op_clause} - {action_clause} {duration_clause}")
+            self.log.info(f"{self._name} '{pipeline_name}'{op_clause} - {action_clause} {duration_clause}")
 
     @staticmethod
     def _propagate_operation_inputs_outputs(pipeline: Pipeline, sorted_operations: List[Operation]) -> None:
@@ -310,8 +305,7 @@ class PipelineProcessor(LoggingConfigurable):  # ABC
         ordered_operations = []
 
         for operation in operations_by_id.values():
-            PipelineProcessor._sort_operation_dependencies(
-                operations_by_id, ordered_operations, operation)
+            PipelineProcessor._sort_operation_dependencies(operations_by_id, ordered_operations, operation)
 
         return ordered_operations
 
@@ -363,8 +357,7 @@ class RuntimePipelineProcessor(PipelineProcessor):
         Create dependency archive for the generic operation identified by operation
         and upload it to object storage.
         """
-        operation_artifact_archive = self._get_dependency_archive_name(
-            operation)
+        operation_artifact_archive = self._get_dependency_archive_name(operation)
 
         # object prefix
         object_prefix = prefix.strip("/")
@@ -372,8 +365,7 @@ class RuntimePipelineProcessor(PipelineProcessor):
         # upload operation dependencies to object store
         try:
             t0 = time.time()
-            dependency_archive_path = self._generate_dependency_archive(
-                operation)
+            dependency_archive_path = self._generate_dependency_archive(operation)
             self.log_pipeline_info(
                 pipeline_name,
                 f"generated dependency archive '{dependency_archive_path}'",
@@ -405,8 +397,7 @@ class RuntimePipelineProcessor(PipelineProcessor):
             ) from ex
         except MaxRetryError as ex:
             cos_endpoint = runtime_configuration.metadata.get("cos_endpoint")
-            self.log.error(
-                f"Connection was refused when attempting to connect to : {cos_endpoint}", exc_info=True)
+            self.log.error(f"Connection was refused when attempting to connect to : {cos_endpoint}", exc_info=True)
             raise RuntimeError(
                 f"Connection was refused when attempting to upload artifacts to : '{cos_endpoint}'. "
                 "Please check your object storage settings."
@@ -463,21 +454,17 @@ class RuntimePipelineProcessor(PipelineProcessor):
             else:
                 return MetadataManager(schemaspace=schemaspace).get(name)
         except BaseException as err:
-            self.log.error(
-                f"Error retrieving metadata configuration for {name}", exc_info=True)
-            raise RuntimeError(
-                f"Error retrieving metadata configuration for {name}", err) from err
+            self.log.error(f"Error retrieving metadata configuration for {name}", exc_info=True)
+            raise RuntimeError(f"Error retrieving metadata configuration for {name}", err) from err
 
     def _verify_export_format(self, pipeline_export_format: str) -> None:
         """
         Check that the given pipeline_export_format is supported by the runtime type;
         otherwise, raise a ValueError
         """
-        export_extensions = RuntimeTypeResources.get_instance_by_type(
-            self._type).get_export_extensions()
+        export_extensions = RuntimeTypeResources.get_instance_by_type(self._type).get_export_extensions()
         if pipeline_export_format not in export_extensions:
-            raise ValueError(
-                f"Pipeline export format '{pipeline_export_format}' not recognized.")
+            raise ValueError(f"Pipeline export format '{pipeline_export_format}' not recognized.")
 
     def _collect_envs(self, operation: GenericOperation, **kwargs) -> Dict:
         """
@@ -537,8 +524,7 @@ class RuntimePipelineProcessor(PipelineProcessor):
 
         # Value could not be successfully converted to dictionary
         if not isinstance(converted_dict, dict):
-            self.log.debug(
-                f"Could not convert entered property value `{value}` to dictionary")
+            self.log.debug(f"Could not convert entered property value `{value}` to dictionary")
             return value
 
         return converted_dict
@@ -565,8 +551,7 @@ class RuntimePipelineProcessor(PipelineProcessor):
 
         # Value could not be successfully converted to list
         if not isinstance(converted_list, list):
-            self.log.debug(
-                f"Could not convert entered property value `{value}` to list")
+            self.log.debug(f"Could not convert entered property value `{value}` to list")
             return value
 
         return converted_list

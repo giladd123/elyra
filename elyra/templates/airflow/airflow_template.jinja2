@@ -1,8 +1,6 @@
 from airflow import DAG
 from airflow.utils.dates import days_ago
-{% if operation.cpu_request or operation.mem_request or operation.gpu_limit %}
 from kubernetes.client import models as k8s
-{% endif %}
 
 args = {
     'project_id' : '{{ pipeline_name }}',
@@ -20,23 +18,23 @@ dag = DAG(
 )
 
 {% for key, operation in operations_list.items() %}
-{% if not operation.is_generic_operator %}
-{% for import_statement in operation.imports %}
+    {% if not operation.is_generic_operator %}
+        {% for import_statement in operation.imports %}
 {{import_statement}}
-{% endfor %}
-{% else %}
+        {% endfor %}
+    {% else %}
 from airflow.contrib.operators.kubernetes_pod_operator import KubernetesPodOperator
-{% endif %}
+    {% endif %}
 
-{% if operation.operator_source %}# Operator source: {{ operation.operator_source }}{% endif %}
-{% if not operation.is_generic_operator %}
-op_{{ operation.id|regex_replace }} = {{ operation.class_name }}(
+    {% if operation.operator_source %}# Operator source: {{ operation.operator_source }}{% endif %}
+    {% if not operation.is_generic_operator %}
+op_{{ operation.id|regex_replace }} = {{ operation.class_name }}
                                                            task_id='{{ operation.notebook|regex_replace }}',
         {% for param, value in operation.component_props.items() %}
                                                            {{ param }}={{ value }},
         {% endfor %}
                                                            executor_config={{ processor.render_elyra_owned_properties(operation.elyra_props) }},
-{% else %}
+    {% else %}
 op_{{ operation.id|regex_replace }} = KubernetesPodOperator(name='{{ operation.notebook|regex_replace }}',
                                                             namespace='{{ user_namespace }}',
                                                             image='{{ operation.runtime_image }}',
@@ -48,13 +46,13 @@ op_{{ operation.id|regex_replace }} = KubernetesPodOperator(name='{{ operation.n
                                                             task_id='{{ operation.notebook|regex_replace }}',
                                                             env_vars={{ operation.pipeline_envs }},
         {% if operation.cpu_request or operation.mem_request or operation.gpu_limit %}
-                                                            resources = k8s.V1ResourceRequirements(
-                                                                request{
+                                                            container_resources = k8s.V1ResourceRequirements(
+                                                                requests={
                                                                     {% if operation.cpu_request %}
                                                                     'cpu': '{{ operation.cpu_request }}',
                                                                     {% endif %}
                                                                     {% if operation.mem_request %}
-                                                                    'memory': '{{ operation.mem_request }}',
+                                                                    'memory': '{{ operation.mem_request }}Gi',
                                                                     {% endif %}             
                                                                 },
                                                                 limits={
@@ -62,13 +60,13 @@ op_{{ operation.id|regex_replace }} = KubernetesPodOperator(name='{{ operation.n
                                                                     'cpu': '{{ operation.cpu_limit }}',
                                                                     {% endif %}
                                                                     {% if operation.mem_request %}
-                                                                    'memory': '{{ operation.mem_limit }}',
+                                                                    'memory': '{{ operation.mem_limit }}Gi',
                                                                     {% endif %}         
                                                                     {% if operation.gpu_limit %}
                                                                     'nvidia.com/gpu': '{{ operation.gpu_limit }}',
                                                                     {% endif %}
                                                                 }
-                                                            )
+                                                            ),
 
         {% endif %}
                                                             annotations={{ processor.render_annotations(operation.elyra_props) }},
