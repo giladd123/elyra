@@ -29,8 +29,7 @@ in Apache Airflow
 INOUT_SEPARATOR = ";"
 
 ELYRA_GITHUB_ORG = os.getenv("ELYRA_GITHUB_ORG", "elyra-ai")
-ELYRA_GITHUB_BRANCH = os.getenv(
-    "ELYRA_GITHUB_BRANCH", "main" if "dev" in __version__ else "v" + __version__)
+ELYRA_GITHUB_BRANCH = os.getenv("ELYRA_GITHUB_BRANCH", "main" if "dev" in __version__ else "v" + __version__)
 
 ELYRA_BOOTSCRIPT_URL = os.getenv(
     "ELYRA_BOOTSTRAP_SCRIPT_URL",
@@ -79,12 +78,10 @@ class BootscriptBuilder(object):
         self.inputs = inputs
         self.container_work_dir_root_path = "./"
         self.container_work_dir_name = "jupyter-work-dir/"
-        self.container_work_dir = self.container_work_dir_root_path + \
-            self.container_work_dir_name
+        self.container_work_dir = self.container_work_dir_root_path + self.container_work_dir_name
 
         if not filename:
-            raise ValueError(
-                "You need to provide a filename for the operation.")
+            raise ValueError("You need to provide a filename for the operation.")
 
     @property
     def container_cmd(self):
@@ -123,7 +120,6 @@ class BootscriptBuilder(object):
         trimmed_artifact_list = []
         for artifact_name in pipeline_array:
             if INOUT_SEPARATOR in artifact_name:  # if INOUT_SEPARATOR is in name, throw since this is our separator
-                raise ValueError(
-                    f"Illegal character ({INOUT_SEPARATOR}) found in filename '{artifact_name}'.")
+                raise ValueError(f"Illegal character ({INOUT_SEPARATOR}) found in filename '{artifact_name}'.")
             trimmed_artifact_list.append(artifact_name.strip())
         return INOUT_SEPARATOR.join(trimmed_artifact_list)

@@ -56,8 +56,7 @@ class GitLabClient(LoggingConfigurable):
             self.client = Gitlab(self.server_url, private_token=token)
             self.gitlab_project = self.client.projects.get(self.project_name)
         except GitlabError as gle:
-            self.log.error(
-                f"Error accessing project {self.project_name}: {gle}")
+            self.log.error(f"Error accessing project {self.project_name}: {gle}")
             raise RuntimeError(
                 f"Error accessing repository {self.project_name}: {gle}. "
                 "Please validate your runtime configuration details and retry."
@@ -86,17 +85,13 @@ class GitLabClient(LoggingConfigurable):
                     }
                 )
 
-            self.log.info(
-                f"DAG file {git_file_name} was successfully uploaded to branch {self.branch}.")
+            self.log.info(f"DAG file {git_file_name} was successfully uploaded to branch {self.branch}.")
 
         except FileNotFoundError as fnfe:
-            self.log.error(
-                f"Unable to locate local DAG file to upload: {pipeline_filepath}: " + str(fnfe))
-            raise RuntimeError(
-                f"Unable to locate local DAG file to upload: {pipeline_filepath}: {str(fnfe)}") from fnfe
+            self.log.error(f"Unable to locate local DAG file to upload: {pipeline_filepath}: " + str(fnfe))
+            raise RuntimeError(f"Unable to locate local DAG file to upload: {pipeline_filepath}: {str(fnfe)}") from fnfe
         except GitlabError as gle:
-            self.log.error(
-                f"Error uploading DAG to branch {self.branch}: {gle}")
+            self.log.error(f"Error uploading DAG to branch {self.branch}: {gle}")
             raise RuntimeError(
                 f"Error uploading DAG to branch {self.branch}: {gle} "
                 "Please validate your runtime configuration details and try again."
